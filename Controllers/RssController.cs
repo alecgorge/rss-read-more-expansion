@@ -57,6 +57,12 @@ namespace rss_expander.Controllers
             }
         }
 
+        [HttpGet, Route("/")]
+        public IActionResult Home()
+        {
+            return View("~/Views/index.cshtml");
+        }
+
         // GET api/values
         [HttpGet, Route("/expanded-rss")]
         public async Task<IActionResult> Get(string url)

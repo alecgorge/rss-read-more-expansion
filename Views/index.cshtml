@@ -1,0 +1,60 @@
+<!doctype html>
+<html class="no-js" lang="">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        <title>RSS/ATOM/RDF Expander by Alec Gorge</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!--<link rel="apple-touch-icon" href="apple-touch-icon.png">-->
+        <!-- Place favicon.ico in the root directory -->
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+        <!--<link rel="stylesheet" href="css/main.css">-->
+        <!--<script src="js/vendor/modernizr-2.8.3.min.js"></script>-->
+        <style type="text/css">
+            #rss-tool {
+                max-width: 640px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container" id="rss-tool">
+            <div class="row">
+                <div class="col-xs-12">
+                    <h1>RSS Expander
+                        <small>by <a href="http://alecgorge.com">Alec Gorge</a></small>
+                    </h1>
+                    <p><em>Supports RSS, ATOM and RDF</em></p>
+                    <hr/>
+                    <form>
+                        <div class="form-group">
+                            <input class="form-control input-lg" id="feed" type="text" placeholder="Feed URL" onclick="this.select()">
+                        </div>
+                        <div class="form-group">
+                            <input class="form-control" type="text" id="url" readonly onclick="this.select()">
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript">
+            var input = document.getElementById("feed")
+            ,   output = document.getElementById("url")
+            ;
+
+            var handleChange = function () {
+                var part = encodeURIComponent(input.value);
+                output.value = "https://rss-expand.alecgorge.com/expanded-rss?url=" + part;
+            }
+
+            input.addEventListener("change", handleChange);
+            input.addEventListener("keyup", handleChange);
+            input.addEventListener("keydown", handleChange);
+
+            input.value = "http://example.org/feed/";
+            handleChange();
+        </script>
+    </body>
+</html>
