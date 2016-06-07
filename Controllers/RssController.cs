@@ -49,7 +49,7 @@ namespace rss_expander.Controllers
             {
                 var json = JsonConvert.DeserializeObject<ReadabilityResponse>(await content.ReadAsStringAsync());
 
-                redis.StringSet(CacheKey(url), json.content, TimeSpan.FromDays(90));
+                redis.StringSet(CacheKey(url), json.content);
 
                 return json.content;
             }
