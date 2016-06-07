@@ -67,12 +67,17 @@ namespace rss_expander.Controllers
                 var doc = XDocument.Load(await content.ReadAsStreamAsync());
 
                 var isRSS = doc.Root.Name.LocalName == "rss";
+                var isRDF = doc.Root.Name.LocalName == "RDF";
 
                 HttpContext.Response.ContentType = "text/xml";
 
                 if (isRSS)
                 {
                     return Ok(await processRSS(doc));
+                }
+                else if(isRDF)
+                {
+                    return Ok(await processRDF(doc));
                 }
 
                 return Ok(await processAtom(doc));
@@ -139,6 +144,30 @@ namespace rss_expander.Controllers
                 var newContent = await Readable(link);
 
                 descNode.ReplaceAll(new XCData(descNode.Value + "<hr/>" + newContent));
+            }
+
+            return doc.Declaration.ToString() + doc.ToString();
+        }
+        async Task<String> processRDF(XDocument doc)
+        {
+            var items = doc.Root
+                .Descendants()
+                .Where(x => x.Name.LocalName == "item");
+
+            foreach (var item in items)
+            {
+                var link = item.Descendants()
+                    .Where(x => x.Name.LocalName == "link")
+                    .First()
+                    .Value;
+
+                var descNode = item.Descendants()
+                    .Where(x => x.Name.LocalName == "description")
+                    .First();
+
+                var newContent = await Readable(link);
+
+                descNode.ReplaceAll(descNode.Value + "<hr/>" + newContent);
             }
 
             return doc.Declaration.ToString() + doc.ToString();
