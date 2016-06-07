@@ -81,6 +81,12 @@ namespace rss_expander.Controllers
                         Where(x => x.Name.LocalName == "description").
                         First();
 
+                    var guidNode = item.Descendants().
+                        Where(x => x.Name.LocalName == "guid").
+                        First();
+
+                    guidNode.SetValue(guidNode.Value + "-full");
+
                     var newContent = await Readable(link);
 
                     descNode.ReplaceAll(new XCData(descNode.Value + "<hr/>" + newContent));
