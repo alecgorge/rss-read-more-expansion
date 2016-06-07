@@ -86,6 +86,8 @@ namespace rss_expander.Controllers
                     descNode.ReplaceAll(new XCData(descNode.Value + "<hr/>" + newContent));
                 }
 
+                HttpContext.Response.ContentType = "text/xml";
+
                 return Ok(doc.Declaration.ToString() + doc.ToString());
             }
         }
