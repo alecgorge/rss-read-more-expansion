@@ -6,7 +6,6 @@ using System.Xml.Linq;
 using System.Net.Http;
 using Newtonsoft.Json;
 using StackExchange.Redis;
-using Microsoft.Extensions.Configuration;
 
 namespace rss_expander.Controllers
 {
@@ -21,7 +20,8 @@ namespace rss_expander.Controllers
 
         IDatabase redis { get; }
 
-        public RssController(RedisDb db) {
+        public RssController(RedisDb db)
+        {
             this.redis = db.db;
         }
 
@@ -31,15 +31,17 @@ namespace rss_expander.Controllers
             return response.Content;
         }
 
-        string CacheKey(string url) {
+        string CacheKey(string url)
+        {
             return "rss_expand_" + url;
-        } 
+        }
 
         public async Task<string> Readable(string url)
         {
             var read = await redis.StringGetAsync(CacheKey(url));
 
-            if(read.HasValue) {
+            if (read.HasValue)
+            {
                 return read.ToString();
             }
 
@@ -64,38 +66,82 @@ namespace rss_expander.Controllers
             {
                 var doc = XDocument.Load(await content.ReadAsStreamAsync());
 
-                var items = doc.Root.
-                    Descendants().
-                    First(x => x.Name.LocalName == "channel").
-                    Descendants().
-                    Where(x => x.Name.LocalName == "item");
-
-                foreach (var item in items)
-                {
-                    var link = item.Descendants().
-                        Where(x => x.Name.LocalName == "link").
-                        First().
-                        Value;
-
-                    var descNode = item.Descendants().
-                        Where(x => x.Name.LocalName == "description").
-                        First();
-
-                    var guidNode = item.Descendants().
-                        Where(x => x.Name.LocalName == "guid").
-                        First();
-
-                    guidNode.SetValue(guidNode.Value + "-full");
-
-                    var newContent = await Readable(link);
-
-                    descNode.ReplaceAll(new XCData(descNode.Value + "<hr/>" + newContent));
-                }
+                var isRSS = doc.Root.Name.LocalName == "rss";
 
                 HttpContext.Response.ContentType = "text/xml";
 
-                return Ok(doc.Declaration.ToString() + doc.ToString());
+                if (isRSS)
+                {
+                    return Ok(await processRSS(doc));
+                }
+
+                return Ok(await processAtom(doc));
             }
+        }
+
+        async Task<string> processAtom(XDocument doc)
+        {
+            var entries = doc.Root
+                .Descendants()
+                .Where(x => x.Name.LocalName == "entry");
+
+            foreach (var entry in entries)
+            {
+                var link = entry.Descendants()
+                    .Where(x => x.Name.LocalName == "link")
+                    .First()
+                    .Attribute("href")
+                    .Value;
+
+                var contentNode = entry.Descendants()
+                    .Where(x => x.Name.LocalName == "content")
+                    .First();
+
+                var guidNode = entry.Descendants()
+                    .Where(x => x.Name.LocalName == "id")
+                    .First();
+
+                guidNode.SetValue(guidNode.Value + "-full");
+
+                var newContent = await Readable(link);
+
+                contentNode.ReplaceAll(new XCData(contentNode.Value + "<hr/>" + newContent));
+            }
+
+            return doc.Declaration.ToString() + doc.ToString();
+        }
+
+        async Task<String> processRSS(XDocument doc)
+        {
+            var items = doc.Root
+                .Descendants()
+                .First(x => x.Name.LocalName == "channel")
+                .Descendants()
+                .Where(x => x.Name.LocalName == "item");
+
+            foreach (var item in items)
+            {
+                var link = item.Descendants()
+                    .Where(x => x.Name.LocalName == "link")
+                    .First()
+                    .Value;
+
+                var descNode = item.Descendants()
+                    .Where(x => x.Name.LocalName == "description")
+                    .First();
+
+                var guidNode = item.Descendants()
+                    .Where(x => x.Name.LocalName == "guid")
+                    .First();
+
+                guidNode.SetValue(guidNode.Value + "-full");
+
+                var newContent = await Readable(link);
+
+                descNode.ReplaceAll(new XCData(descNode.Value + "<hr/>" + newContent));
+            }
+
+            return doc.Declaration.ToString() + doc.ToString();
         }
     }
 }
