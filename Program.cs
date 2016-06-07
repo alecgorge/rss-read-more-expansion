@@ -14,6 +14,7 @@ namespace rss_expander
         {
             var host = new WebHostBuilder()
                 .UseKestrel()
+                .UseUrls("http://*:5000")
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseIISIntegration()
                 .UseStartup<Startup>()
